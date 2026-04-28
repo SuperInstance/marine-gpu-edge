@@ -276,6 +276,54 @@ target_link_libraries(bench_scheduler PRIVATE
 )
 
 # ============================================================
+# TARGET: marine_beamformer  (delay-and-sum multibeam sonar)
+# ============================================================
+
+add_library(marine_beamformer STATIC
+    src/sonar_beamformer.cu
+)
+
+set_target_properties(marine_beamformer PROPERTIES
+    CUDA_ARCHITECTURES "${CUDA_ARCH_LIST}"
+    CUDA_SEPARABLE_COMPILATION ON
+)
+
+target_include_directories(marine_beamformer PUBLIC
+    ${CMAKE_SOURCE_DIR}/include
+    ${CUDAToolkit_INCLUDE_DIRS}
+)
+
+target_compile_definitions(marine_beamformer PRIVATE ${ARCH_DEFINES})
+
+target_link_libraries(marine_beamformer PUBLIC
+    CUDA::cudart
+)
+
+# ============================================================
+# TARGET: bench_beamformer  (multibeam beamforming benchmark)
+# ============================================================
+
+add_executable(bench_beamformer
+    benchmarks/bench_beamformer.cu
+)
+
+set_target_properties(bench_beamformer PROPERTIES
+    CUDA_ARCHITECTURES "${CUDA_ARCH_LIST}"
+)
+
+target_include_directories(bench_beamformer PRIVATE
+    ${CMAKE_SOURCE_DIR}/include
+    ${CUDAToolkit_INCLUDE_DIRS}
+)
+
+target_compile_definitions(bench_beamformer PRIVATE ${ARCH_DEFINES})
+
+target_link_libraries(bench_beamformer PRIVATE
+    marine_beamformer
+    CUDA::cudart
+)
+
+# ============================================================
 # INSTALL RULES (optional)
 # ============================================================
 

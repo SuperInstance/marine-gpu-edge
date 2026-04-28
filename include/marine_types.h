@@ -342,6 +342,16 @@ struct FusionResult {
     bool  graph_captured    = false;
 };
 // ============================================================
+struct BeamformerConfig {
+    int num_elements     = 32;
+    int num_beams        = 128;
+    int num_samples      = 2048;
+    float element_spacing = 0.02f;   // meters
+    float sound_velocity = 1500.0f;  // m/s
+    float sample_rate    = 40000.0f; // Hz
+    float beam_width_deg = 180.0f;
+};
+
 // HOST KERNEL WRAPPER DECLARATIONS
 // Only visible when compiled by nvcc (cudaError_t / cudaStream_t require
 // cuda_runtime.h which non-CUDA translation units do not include).
