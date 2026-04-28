@@ -324,6 +324,56 @@ target_link_libraries(bench_beamformer PRIVATE
 )
 
 # ============================================================
+# TARGET: marine_monte_carlo  (uncertainty propagation)
+# ============================================================
+
+add_library(marine_monte_carlo STATIC
+    src/monte_carlo_uncertainty.cu
+)
+
+set_target_properties(marine_monte_carlo PROPERTIES
+    CUDA_ARCHITECTURES "${CUDA_ARCH_LIST}"
+    CUDA_SEPARABLE_COMPILATION ON
+)
+
+target_include_directories(marine_monte_carlo PUBLIC
+    ${CMAKE_SOURCE_DIR}/include
+    ${CUDAToolkit_INCLUDE_DIRS}
+)
+
+target_compile_definitions(marine_monte_carlo PRIVATE ${ARCH_DEFINES})
+
+target_link_libraries(marine_monte_carlo PUBLIC
+    CUDA::cudart
+    curand
+)
+
+# ============================================================
+# TARGET: bench_monte_carlo  (uncertainty benchmark)
+# ============================================================
+
+add_executable(bench_monte_carlo
+    benchmarks/bench_monte_carlo.cu
+)
+
+set_target_properties(bench_monte_carlo PROPERTIES
+    CUDA_ARCHITECTURES "${CUDA_ARCH_LIST}"
+)
+
+target_include_directories(bench_monte_carlo PRIVATE
+    ${CMAKE_SOURCE_DIR}/include
+    ${CUDAToolkit_INCLUDE_DIRS}
+)
+
+target_compile_definitions(bench_monte_carlo PRIVATE ${ARCH_DEFINES})
+
+target_link_libraries(bench_monte_carlo PRIVATE
+    marine_monte_carlo
+    CUDA::cudart
+    curand
+)
+
+# ============================================================
 # INSTALL RULES (optional)
 # ============================================================
 
