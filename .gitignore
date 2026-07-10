@@ -2,3 +2,4 @@ build/
 .remember/
 *.o
 *.a
+tests/test_mep_bridge
