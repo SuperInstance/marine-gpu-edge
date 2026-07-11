@@ -174,6 +174,24 @@ marine-gpu-edge/
 
 ---
 
+## Related repos
+
+Part of the SuperInstance / Cocapn edge stack. Siblings with a real overlap:
+
+- **[nexus-edge-runtime](https://github.com/SuperInstance/nexus-edge-runtime)** —
+  has its own `perception/fusion.py` sensor-fusion module; this project is the
+  GPU-accelerated counterpart to that CPU-side fusion logic.
+- **[open-mythos-edge](https://github.com/SuperInstance/open-mythos-edge)** —
+  a PyTorch transformer targeting the same Jetson Orin (SM 8.7) hardware this
+  edge node serves.
+- **[edge-equipment-catalog](https://github.com/SuperInstance/edge-equipment-catalog)**
+  — profiles the Jetson Orin Nano / AGX Orin that appear in the hardware table
+  above.
+- **[Edge-Native](https://github.com/SuperInstance/Edge-Native)** — the
+  Jetson-side bytecode/firmware layer for the same device family.
+
+---
+
 ## License
 
 MIT — see source file headers.
