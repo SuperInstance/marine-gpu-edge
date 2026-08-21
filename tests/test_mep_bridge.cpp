@@ -273,6 +273,42 @@ static bool test_oversized_payload_is_truncated_not_undefined() {
     return true;
 }
 
+static bool test_oversized_payload_does_not_desync_stream() {
+    SocketPair sp;
+    REQUIRE(sp.ok());
+
+    MEPBridge sender;
+    MEPBridge receiver;
+
+    // Message 1: payload longer than the receiver's buffer.
+    const char big[] = "this payload is longer than the receive buffer";
+    const uint32_t big_len = static_cast<uint32_t>(std::strlen(big));
+    REQUIRE(sender.send_msg(sp.send_fd, MEP_ALERT, big, big_len));
+
+    // Message 2: a normal follow-up on the same stream.
+    const char small[] = "next";
+    const uint32_t small_len = static_cast<uint32_t>(std::strlen(small));
+    REQUIRE(sender.send_msg(sp.send_fd, MEP_PING, small, small_len));
+
+    // Receive message 1 into a too-small buffer (truncates).
+    MEPHeader h1 = {};
+    char buf1[16] = {};
+    REQUIRE(receiver.recv_msg(sp.recv_fd, h1, buf1, sizeof(buf1)));
+    REQUIRE(h1.type   == MEP_ALERT);
+    REQUIRE(h1.length == big_len);
+
+    // The receiver must have drained the oversized tail; otherwise the next
+    // recv_msg() would read leftover payload bytes as a header and fail with
+    // bad magic.
+    MEPHeader h2 = {};
+    char buf2[64] = {};
+    REQUIRE(receiver.recv_msg(sp.recv_fd, h2, buf2, sizeof(buf2)));
+    REQUIRE(h2.type   == MEP_PING);
+    REQUIRE(h2.length == small_len);
+    REQUIRE(std::memcmp(buf2, small, small_len) == 0);
+    return true;
+}
+
 // ---------------------------------------------------------------------------
 // Constraint scheduler tests
 // ---------------------------------------------------------------------------
@@ -425,6 +461,7 @@ int main() {
     RUN_TEST(test_send_recv_payload_roundtrip);
     RUN_TEST(test_send_recv_empty_payload);
     RUN_TEST(test_oversized_payload_is_truncated_not_undefined);
+    RUN_TEST(test_oversized_payload_does_not_desync_stream);
     RUN_TEST(test_scheduler_register_bounds);
     RUN_TEST(test_scheduler_inactive_node_is_ineligible);
     RUN_TEST(test_scheduler_rejects_thermal_throttle);
