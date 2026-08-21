@@ -27,6 +27,29 @@ using a constraint-aware scheduler and a lightweight binary protocol (MEP).
 
 ---
 
+## Verification status
+
+This repository was last hardened on the `production-round3-2026-07-10` branch.
+The host used for that pass had **no CUDA toolkit, no `nvcc`, and no GPU**,
+so only the genuinely CPU-testable portions could be verified.
+
+| Claim | Status | Notes |
+|---|---|---|
+| MEP 16-byte binary header | ✅ Verified | `static_assert(sizeof(MEPHeader) == 16)` enforced at compile time; serialisation, validation, and send/recv framing covered by `tests/test_mep_bridge.cpp` |
+| Constraint-aware scheduler logic | ✅ Verified | Thermal, memory, load, FP16, and PTX scoring tested in `tests/test_mep_bridge.cpp` |
+| CUDA kernel behaviour (NMEA parse, Kalman, sonar waterfall, constraint check) | 🔮 Requires GPU | Needs `nvcc` + CUDA 12.6 + actual RTX 4050 / Jetson Orin hardware |
+| GPU scheduling / runtime precision switching | 🔮 Requires GPU | Depends on kernel behaviour above |
+| Benchmark numbers in the table below | 🔮 Requires GPU | Currently placeholders (`TBD`) until run on real hardware |
+
+Run the CPU-only tests with plain g++ (no CUDA needed):
+
+```bash
+g++ -std=c++17 -I include -I src tests/test_mep_bridge.cpp src/mep_bridge.cpp -o tests/test_mep_bridge
+./tests/test_mep_bridge
+```
+
+---
+
 ## Build
 
 ### Requirements
@@ -138,12 +161,34 @@ marine-gpu-edge/
 │   └── mep_bridge.cpp          # MEP protocol implementation
 ├── benchmarks/
 │   └── bench_nmea.cu           # NMEA parse throughput benchmark
+├── tests/
+│   └── test_mep_bridge.cpp     # CPU-only unit tests for MEP bridge + scheduler
+├── .github/workflows/
+│   └── mep_bridge.yml          # CI for the CPU-only bridge tests
 ├── docs/
 │   ├── ARCHITECTURE.md
 │   └── API.md
 ├── CMakeLists.txt
 └── README.md
 ```
+
+---
+
+## Related repos
+
+Part of the SuperInstance / Cocapn edge stack. Siblings with a real overlap:
+
+- **[nexus-edge-runtime](https://github.com/SuperInstance/nexus-edge-runtime)** —
+  has its own `perception/fusion.py` sensor-fusion module; this project is the
+  GPU-accelerated counterpart to that CPU-side fusion logic.
+- **[open-mythos-edge](https://github.com/SuperInstance/open-mythos-edge)** —
+  a PyTorch transformer targeting the same Jetson Orin (SM 8.7) hardware this
+  edge node serves.
+- **[edge-equipment-catalog](https://github.com/SuperInstance/edge-equipment-catalog)**
+  — profiles the Jetson Orin Nano / AGX Orin that appear in the hardware table
+  above.
+- **[Edge-Native](https://github.com/SuperInstance/Edge-Native)** — the
+  Jetson-side bytecode/firmware layer for the same device family.
 
 ---
 
