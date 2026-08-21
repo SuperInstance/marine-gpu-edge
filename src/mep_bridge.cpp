@@ -242,6 +242,24 @@ bool MEPBridge::recv_msg(int fd, MEPHeader& hdr, void* buf, uint32_t bufsize) {
             perror("recv_msg: payload");
             return false;
         }
+
+        // If the caller's buffer was smaller than the payload, drain the
+        // leftover bytes off the wire. Without this the next recv_msg() would
+        // read the trailing payload bytes as a header and permanently
+        // desynchronise the stream (bad magic on the following message).
+        uint32_t leftover = hdr.length - to_read;
+        if (leftover > 0) {
+            char drain[256];
+            while (leftover > 0) {
+                uint32_t chunk = std::min(leftover, (uint32_t)sizeof(drain));
+                ssize_t  d     = recv_all(fd, drain, chunk);
+                if (d != (ssize_t)chunk) {
+                    perror("recv_msg: drain oversized payload tail");
+                    return false;
+                }
+                leftover -= chunk;
+            }
+        }
     }
 
     return true;
